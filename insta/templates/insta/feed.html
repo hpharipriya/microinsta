@@ -5,6 +5,58 @@
     .add_form{
        display: none;
     }
+
+
+    body {
+        /*background-color: #B3E5FC;*/
+        border-radius: 10px
+    }
+    
+    .card {
+        width: 400px;
+        border: none;
+        border-radius: 10px;
+        background-color: #fff
+    }
+    
+    .stats {
+        background: #f2f5f8 !important;
+        color: #000 !important
+    }
+    
+    .articles {
+        font-size: 10px;
+        color: #a1aab9
+    }
+    
+    .number1 {
+        font-weight: 500
+    }
+    
+    .followers {
+        font-size: 10px;
+        color: #a1aab9
+    }
+    
+    .number2 {
+        font-weight: 500
+    }
+    
+    .rating {
+        font-size: 10px;
+        color: #a1aab9
+    }
+    
+    .number3 {
+        font-weight: 500
+    }
+    .d-flex{display: flex !important;}
+    .flex-column {
+        flex-direction: column !important;
+    }
+    .image{
+        padding: 2px;
+    }
 </style>
 <script>
     function showAddForm(){
@@ -14,8 +66,31 @@
     function closeAddForm(){
         $('.add_form').hide();
     }
+
+    
+    function follow(follow_id){
+        alert("hii");
+        alert(follow_id);
+        $.ajax({
+            type: 'POST',
+            url: "{% url 'follow' %}",
+            data: {'follow_id': follow_id ,
+            'csrfmiddlewaretoken': '{{ csrf_token }}',
+        },
+            success: function (response) {
+                
+            },
+            error: function (response) {
+                // alert the error if any error occured
+                alert(response["responseJSON"]["error"]);
+            },
+    });
+}
+
 </script>
+
 {% endblock %}
+
 {% block content %}
 <div class="top_right">Notification <a href='#' onclick="showAddForm()">+</a> </div>
 <div class="add_form modal" role="dialog">
@@ -43,6 +118,8 @@
     </div>
     
 </div>
+<div class="col-md-2"></div>
+<div class="col-md-6">
 <div class="main-content">
     
     
@@ -51,4 +128,34 @@
     Uploaded {{uploadedValues.caption}}
     {% endif %}
 </div>
+</div>
+
+
+<div class="col-md-4">
+<h2 style="text-align:center">People You may Know</h2>
+{% for key,near_by_user in near_by_users.items %}
+    <div class="container mt-5 d-flex justify-content-center" style="margin:5px;padding:5px;">
+        <div class="card p-3">
+            <div class="d-flex align-items-center">
+                <div class="image"> <img src="https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=500&q=80" class="rounded" width="155"> </div>
+                <div class="ml-3 w-100">
+                    <h4 class="mb-0 mt-0">{{ near_by_user.profile}}</h4> <span>Senior Journalist</span>
+                    <div class="p-2 mt-2 bg-primary d-flex justify-content-between rounded text-white stats">
+                        <!--<div class="d-flex flex-column"> <span class="articles">Articles</span> <span class="number1">38</span> </div>
+                        <div class="d-flex flex-column"> <span class="followers">Followers</span> <span class="number2">980</span> </div>
+                        <div class="d-flex flex-column"> <span class="rating">Rating</span> <span class="number3">8.9</span> </div>-->
+                    </div>
+                    
+                    <div class="button mt-2 d-flex flex-row align-items-center">  <button class="btn btn-sm btn-primary w-100 ml-2 " id="follow-button" onclick=follow({{near_by_user.id}})>Follow</button> </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    </div>
+
+
+
+
+
 {% endblock %}

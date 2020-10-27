@@ -4,8 +4,10 @@ from .forms import PostForm
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponse
 import requests
-from .models import Location, Userprofile
+from .models import Location, Userprofile, Follow, Post
 from django.db import connection
+from django.contrib.auth.models import User
+
 # Create your views here.
 
 def add(request):
@@ -49,12 +51,27 @@ def index(request):
                 print(form.errors)
         else:
             form = PostForm(user=request.user)
-            
-        context = {'form':form}
+            near_by_users = get_nearby_users(request,"kannur")
+            posts = get_posts(request)
+        context = {'form':form,"near_by_users":near_by_users,}
         return render(request,'insta/feed.html',context)
     else:
         return redirect('accounts/login')
-
+def get_posts(request):
+    #sql="select * from post where user_id_id in (select user_id from follow where floower_id = request.user.id"
+    #posts = Post.objects.select_related('user_id')
+    with connection.cursor() as cursor:
+        sql = "select * from insta_post left join insta_follow on insta_post.user_id_id = insta_follow.user_id_id where (insta_post.user_id_id = "+str(request.user.id) +") or  (insta_follow.follower_id_id =" + str(request.user.id) +") order by insta_post.created_at desc" 
+        print(sql)
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+    #posts = Post.objects.filter(follows_follower=request.user.id)
+    print("----")
+    print(rows)
+    for post in rows:
+        print(post)
+    print("-----")
+   # filter(follow__follower_id_id=request.user)
 
 def get_location(request,name):
     location_name = name
@@ -85,7 +102,6 @@ def get_location(request,name):
         #current_user = requ 
         user_profile = Userprofile.objects.create(user_id = userid,location=location,profile_name=request.user.username)
         user_profile.save()
-        get_nearby_users(county)
     else :
         return False
     
@@ -94,11 +110,30 @@ def get_location(request,name):
     #     'country': geodata['country_name']
     # })
 
-def get_nearby_users(location):
+def get_nearby_users(request,locations):
     locs = Location.objects.raw('SELECT id, name,( 6371 * acos ( cos ( radians(11.8762254) ) * cos( radians( lattitude ) ) * cos( radians( longitude ) - radians(75.3738043) ) + sin ( radians(11.8762254) ) * sin( radians( lattitude ) ))) AS distance FROM insta_location ORDER BY distance LIMIT 0 , 20')
+    near_by_user_dict = {}
+    i = 0 
     for loc in locs:
-        ups = Userprofile.objects.all().filter(location=loc.id)
+        ups = Userprofile.objects.all().filter(location=loc.id).exclude( user_id = request.user)
         for up in ups:
-            print(up.profile_name)
-    pass
+            near_by_user_dict[i] = {'profile' : up.profile_name,"id": up.user_id_id}
+            
+        i = i+1
+    return near_by_user_dict
 
+def follow(request):
+    userid = request.user.id
+    print (request.POST['follow_id'])
+    follow_id = request.POST['follow_id']
+
+    follow_user = User.objects.get(pk=follow_id)
+    follower = User.objects.get(pk=userid)
+
+    up = Userprofile.objects.get(user_id=follow_id)
+    if up.is_public :
+        is_accepted = True
+    else:
+        is_accepted = False
+    follower = Follow.objects.create(user_id=follow_user,follower_id=follower,is_accepted=is_accepted)
+    return HttpResponse({"data":"success"})

@@ -6,19 +6,31 @@
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
         <link href="/static/css/style.css" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css?family=Indie+Flower|Overpass+Mono" rel="stylesheet">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{% block title %} {% endblock %}</title>
         {% block headpart %} {% endblock %}
     </head>
     <body>
-        <div id="wrapper">
-            <div class="header">
-                <img src="/static/images/instagram.png" />
+        <div class="row"><div class="col-md-12">
+            <div id="">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="header">
+                            <img src="/static/images/instagram.png" />
+                        </div>
+                    </div>
+                    {% if request.user.is_authenticated %} <div style="text-align:right"><a href='accounts/logout' >Logout</a> </div>{% endif %}
+                    {% block content %}
+                    {% endblock %}
+                    <div class="side_bar">
+                        {% block side_bar_right %}
+                        {% endblock %}
+                    </div>
+                </div>
             </div>
-             {% if request.user.is_authenticated %} <div style="text-align:right"><a href='accounts/logout' >Logout</a> </div>{% endif %}
-            {% block content %}
-            {% endblock %}
+        </div>
         </div>
     </body>
 </html>
