@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link href="/static/css/style.css" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Indie+Flower|Overpass+Mono" rel="stylesheet">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %} {% endblock %}</title>
+    </head>
+    <body>
+        <div id="wrapper">
+            <div class="main-content">
+                <div class="header">
+                    <img src="/static/images/instagram.png" />
+                </div>
+                {% block content %} {% endblock %}
+            </div>
+        </div>
+    </body>
+</html>

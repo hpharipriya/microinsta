@@ -1,0 +1,54 @@
+{% extends 'insta/base.html' %}
+{% block title %}My feed{% endblock %}
+{% block headpart %} 
+<style>
+    .add_form{
+       display: none;
+    }
+</style>
+<script>
+    function showAddForm(){
+        //$("a").toggleClass("add_form");
+        $('.add_form').show();
+    }
+    function closeAddForm(){
+        $('.add_form').hide();
+    }
+</script>
+{% endblock %}
+{% block content %}
+<div class="top_right">Notification <a href='#' onclick="showAddForm()">+</a> </div>
+<div class="add_form modal" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" style="text-align: center;">Upload Your Picture Stories Here</h3>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeAddForm()">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+    <form method = 'post' action="{% url 'index' %} " enctype="multipart/form-data">
+        {% csrf_token %}
+        {% if form.errors%}
+        <p> Something went wrong</p>
+        {% endif %}
+        {{context}}
+         {{form}} 
+        <input type="submit" value=Submit />
+
+    </form>
+    </div>
+    </div>
+    </div>
+    
+</div>
+<div class="main-content">
+    
+    
+    {%if uploadedValues %}
+    <img src='/media/posts/{{uploadedValues.imagepath}}'  width="100%" />
+    Uploaded {{uploadedValues.caption}}
+    {% endif %}
+</div>
+{% endblock %}
