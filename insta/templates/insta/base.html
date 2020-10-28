@@ -4,7 +4,8 @@
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-        <link href="/static/css/style.css" rel="stylesheet">
+        <link href="/static/css/style.css?ver=1" rel="stylesheet">
+        <script src="/static/js/scripts.js"></script>
         <link href="https://fonts.googleapis.com/css?family=Indie+Flower|Overpass+Mono" rel="stylesheet">
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
         <meta charset="UTF-8">
@@ -21,7 +22,7 @@
                             <img src="/static/images/instagram.png" />
                         </div>
                     </div>
-                    {% if request.user.is_authenticated %} <div style="text-align:right"><a href='accounts/logout' >Logout</a> </div>{% endif %}
+                    {% if request.user.is_authenticated %} <div style="text-align:right"> Hello, {{request.user.username}}<a href='accounts/logout' >Logout</a> </div>{% endif %}
                     {% block content %}
                     {% endblock %}
                     <div class="side_bar">

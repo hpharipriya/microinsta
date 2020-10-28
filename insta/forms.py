@@ -30,7 +30,7 @@ class PostForm(forms.ModelForm):
 
     def save(self, commit=True):
         inst = super(PostForm, self).save(commit=False)
-        inst.user_id = self._user
+        inst.user = self._user
         if commit:
             inst.save()
             self.save_m2m()

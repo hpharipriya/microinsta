@@ -4,9 +4,10 @@ from .forms import PostForm
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponse
 import requests
-from .models import Location, Userprofile, Follow, Post
+from .models import Location, Userprofile, Follow, Post, Likes,Comment
 from django.db import connection
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
 
 # Create your views here.
 
@@ -51,9 +52,15 @@ def index(request):
                 print(form.errors)
         else:
             form = PostForm(user=request.user)
-            near_by_users = get_nearby_users(request,"kannur")
+            connections = Follow.objects.all().filter(follower=request.user)
+            connections_list = []
+            for connection in connections:
+                connections_list.append(connection.user.id)
+
+            near_by_users = get_nearby_users(request,"kannur",connections_list)
+            
             posts = get_posts(request)
-        context = {'form':form,"near_by_users":near_by_users,}
+        context = {'form':form,"near_by_users":near_by_users,"posts":posts,"connections":connections_list,}
         return render(request,'insta/feed.html',context)
     else:
         return redirect('accounts/login')
@@ -61,17 +68,72 @@ def get_posts(request):
     #sql="select * from post where user_id_id in (select user_id from follow where floower_id = request.user.id"
     #posts = Post.objects.select_related('user_id')
     with connection.cursor() as cursor:
-        sql = "select * from insta_post left join insta_follow on insta_post.user_id_id = insta_follow.user_id_id where (insta_post.user_id_id = "+str(request.user.id) +") or  (insta_follow.follower_id_id =" + str(request.user.id) +") order by insta_post.created_at desc" 
+        # sql = """select * 
+        #         from insta_post left join insta_follow 
+        #         on insta_post.user_id_id = insta_follow.user_id_id 
+        #         where 
+        #         (insta_post.user_id_id = """+str(request.user.id) +""") 
+        #         and 
+        #         (insta_follow.is_accepted = '1')
+        #         or  
+        #         (insta_follow.follower_id_id =""" + str(request.user.id) +""") 
+        #         order by insta_post.created_at desc""" 
+
+        # sql = """SELECT instaP.* 
+        #         FROM `insta_post` as instaP 
+        #         LEFT JOIN `insta_follow` as instaF 
+        #         on (instaP.user_id_id = instaF.user_id_id) 
+        #         WHERE 
+        #         (instaF.is_accepted = 1 AND instaF.follower_id_id = 2) 
+        #         OR 
+        #         instaP.user_id_id = """+str(request.user.id)+""" ORDER BY instaP.created_at DESC"""
+        sql = """SELECT instaP.*, COUNT(instaL.id) as likes 
+FROM `insta_post` as instaP 
+LEFT JOIN `insta_follow` as instaF on (instaP.user_id = instaF.user_id AND instaF.is_accepted = 1)
+LEFT JOIN `insta_likes` instaL ON (instaP.id = instaL.post_id AND instaP.user_id = """+str(request.user.id)+""" )
+where instaF.follower_id = """+str(request.user.id)+""" OR instaP.user_id = """+str(request.user.id)+"""
+GROUP BY(instaL.post_id) ORDER BY instaP.created_at DESC"""
+
         print(sql)
         cursor.execute(sql)
         rows = cursor.fetchall()
+        paginator = Paginator(rows, 20)
+        page_number = request.GET.get('page',1)
+        page_obj = paginator.get_page(page_number)
     #posts = Post.objects.filter(follows_follower=request.user.id)
     print("----")
-    print(rows)
-    for post in rows:
-        print(post)
-    print("-----")
+    #print(page_obj)
+    posts = {}
+    i = 0
+    liked_val = False
+    for postval in page_obj:
+        print("****")
+        print(postval)
+        print("******")
+        post_id_val = postval[0]
+        liked = get_like_status(request,post_id_val)
+        if(liked):
+            liked_val = True
+        
+        print(liked_val)
+        
+        posts[i] = {'id': post_id_val,'image': postval[1],'caption': postval[2],'liked':liked_val}
+        i += 1
+    return posts
+    
+
    # filter(follow__follower_id_id=request.user)
+def get_like_status(request,id):
+    try:
+        liked = Likes.objects.get(post_id=id)
+        if liked:
+            
+            print(liked)
+            
+            return liked
+    except:
+        return False
+
 
 def get_location(request,name):
     location_name = name
@@ -79,8 +141,9 @@ def get_location(request,name):
 
     response = requests.get(api_url)
     geodata = response.json()
-    data = geodata['results'][0]
-    if(data):
+    
+    if(geodata['results']):
+        data = geodata['results'][0]
         name = data['formatted']
         lattitude = data['geometry']['lat']
         longitude = data['geometry']['lng']
@@ -90,17 +153,20 @@ def get_location(request,name):
         state = data['components']['state']
         postcode = data['components']['postcode']
         county = data['components']['county']
-        location = Location.objects.create(name=name,lattitude=lattitude,longitude=longitude)
-        location.continent = continent
-        location.country_code = country_code
-        location.country = country
-        location.state = state
-        location.postcode = postcode
-        location.county = county
-        location.save()
-        userid = request.user
+        location = Location.objects.get_or_create(name=name,lattitude=lattitude,longitude=longitude)
+        if type(location == 'tuple'):
+            location = location[0]
+        
+        # location.continent = continent
+        # location.country_code = country_code
+        # location.country = country
+        # location.state = state
+        # location.postcode = postcode
+        # location.county = county
+        # location.save()
+        user = request.user
         #current_user = requ 
-        user_profile = Userprofile.objects.create(user_id = userid,location=location,profile_name=request.user.username)
+        user_profile = Userprofile.objects.create(user = user,location=location,profile_name=request.user.username)
         user_profile.save()
     else :
         return False
@@ -110,15 +176,15 @@ def get_location(request,name):
     #     'country': geodata['country_name']
     # })
 
-def get_nearby_users(request,locations):
+def get_nearby_users(request,locations,connections_list):
     locs = Location.objects.raw('SELECT id, name,( 6371 * acos ( cos ( radians(11.8762254) ) * cos( radians( lattitude ) ) * cos( radians( longitude ) - radians(75.3738043) ) + sin ( radians(11.8762254) ) * sin( radians( lattitude ) ))) AS distance FROM insta_location ORDER BY distance LIMIT 0 , 20')
     near_by_user_dict = {}
-    i = 0 
+    i = 0  
     for loc in locs:
-        ups = Userprofile.objects.all().filter(location=loc.id).exclude( user_id = request.user)
+        ups = Userprofile.objects.all().filter(location=loc.id).exclude( user = request.user)
         for up in ups:
-            near_by_user_dict[i] = {'profile' : up.profile_name,"id": up.user_id_id}
-            
+            if up.user_id not in connections_list:
+                near_by_user_dict[i] = {'profile' : up.profile_name,"id": up.user_id,"location":up.location.name}
         i = i+1
     return near_by_user_dict
 
@@ -135,5 +201,27 @@ def follow(request):
         is_accepted = True
     else:
         is_accepted = False
-    follower = Follow.objects.create(user_id=follow_user,follower_id=follower,is_accepted=is_accepted)
+    follower = Follow.objects.get_or_create(user=follow_user,follower=follower,is_accepted=is_accepted)
+    return HttpResponse({"data":"success"})
+
+def likeme(request):
+    print (request.POST)
+    userid = request.user
+    post_id = request.POST['post_id']
+    unlike= request.POST['unlike']
+    print("----unlike------")
+    print(unlike)
+    print("----------")
+    if unlike == 'unlike' :
+
+        Likes.objects.filter(post_id=post_id,user=userid).delete()
+    else :
+        likes = Likes.objects.get_or_create(read_by_owner=0,post_id=post_id,user=userid)
+    return HttpResponse({"data":"success"})
+
+def comment(request):
+    user = request.user
+    postVal = request.POST['post_id']
+    comment_val = request.POST['comment_val']
+    commented = Comment.objects.get_or_create(user=user,post_id = postVal,comment_body=comment_val)
     return HttpResponse({"data":"success"})
