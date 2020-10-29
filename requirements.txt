@@ -6,7 +6,6 @@ django-location-field==2.1.0
 gis==0.2.1
 gunicorn==20.0.4
 idna==2.10
-mysqlclient==2.0.1
 Pillow==8.0.1
 psycopg2==2.8.6
 pytz==2020.1
