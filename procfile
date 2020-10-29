@@ -1,1 +1,1 @@
-web: gunicorn microinsta.wsgi --log-file -
+web: gunicorn microinsta:app
