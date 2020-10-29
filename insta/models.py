@@ -40,20 +40,28 @@ class Post(models.Model):
 class Likes(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     post = models.ForeignKey(Post,on_delete=models.CASCADE)
-    time = models.DateTimeField(auto_now_add=True)
     read_by_owner = models.BooleanField(default=False)
+    created_time = models.DateTimeField(auto_now_add=True,null=True,blank=True)
+    def __str__(self):
+        return 'Likes' 
 
 class Comment(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     post = models.ForeignKey(Post,on_delete=models.CASCADE)
     comment_body = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_time = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True,blank=True)
     read_by_owner = models.BooleanField(default=False)
     parent_comment = models.ForeignKey('self',null=True,blank=True, on_delete=models.CASCADE)
     is_deleted = models.BooleanField(default=False)
+    def __str__(self):
+        return 'Comment' 
 
 class Follow(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     follower = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='%(class)s_follower',on_delete=models.CASCADE)
     is_accepted = models.BooleanField(default=False)
+    created_time = models.DateTimeField(auto_now_add=True,null=True,blank=True)
+
+    def __str__(self):
+        return 'Follow' 

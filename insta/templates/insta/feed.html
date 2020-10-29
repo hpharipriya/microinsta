@@ -50,7 +50,12 @@ function likeme(post_id,unlike){
 }
     
     $(document).ready(function(){
-        $("#comment_form").submit(function(){
+
+        $("#comment_form").on("submit", function(event){
+            event.preventDefault();
+     
+            var formValues= $(this).serialize();
+
             $.ajax({
                 type: 'POST',
                 url: '/comment/',
@@ -65,7 +70,13 @@ function likeme(post_id,unlike){
                     alert(response["responseJSON"]["error"]);
                 },
         });
-          });
+     
+           /* $.post("process_form.php", formValues, function(data){
+                // Display the returned data in browser
+                $("#result").html(data);
+            });
+        });*/
+    });
 
         $("#heart").click(function(){
           if($("#heart").hasClass("liked")){
@@ -83,7 +94,33 @@ function likeme(post_id,unlike){
 {% endblock %}
 
 {% block content %}
-<div class="top_right">Notification <a href='#' onclick="showAddForm()">+</a> </div>
+<div class="top_right"><span id='notify' onclick="showNotif()"> Notification </span> <a href='#' onclick="showAddForm()">+</a> 
+    <div class="notif modal" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title" style="text-align: center;">Notifications</h3>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeNotif()">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {% for index,obj in notifications.items reversed  %}
+                        {%if obj.type == 'Follow' %}
+                            <span>{{obj.result.follower.username}} started following you </span> </br>
+                        {% elif obj.type == 'Likes' %} 
+                        <span>{{obj.result.user.username}} likes your post </span> </br>
+                        {% elif obj.type == 'Comment' %} 
+                        <span> {{obj.result.user.username}} commented on your post </span> </br>
+                        
+                        
+                        {% endif %}
+                    {% endfor  %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="add_form modal" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -116,6 +153,8 @@ function likeme(post_id,unlike){
     {% if posts %}
     {% for id, postval in posts.items %}
     <div class="card" style="width: 58rem;">
+
+        {{postval.post_user.username}} uploaded
         <img src='/media/{{postval.image}}'  width="100%" />
         <div class="card-body">
             <p class="card-text">{{postval.caption}} </p>
@@ -129,13 +168,13 @@ function likeme(post_id,unlike){
                 </span>
                 
             {% endif %}
-            <a href="#" onclick="openCBox()">comment</a>
+            <span  onclick="openCBox()">comment</span>
             <div class="cbox">
                 <form method="POST" id="comment_form">
                     {% csrf_token %}
                     <input type="hidden" value="{{postval.id}}" name="post_id" />
                     <textarea rows="3" cols="70" name="comment_val"></textarea>
-                    <button value="Submit" style="width: 15%;" name="comment_submit" >
+                    <button   value="Submit" style="width: 15%;" name="comment_submit" >ddd</button>
                 </form>
             </div>  
                
@@ -172,7 +211,7 @@ function likeme(post_id,unlike){
     <div class="mt-5 d-flex justify-content-center" style="margin:5px;padding:5px;">
         <div class="card p-3">
             <div class="d-flex align-items-center">
-                <div class="image"> <img src="https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=500&q=80" class="rounded" width="155"> </div>
+                <div class="image"> <img src="/static/images/default-dp.jpg" class="rounded" width="155"> </div>
                 <div class="ml-3 w-100">
                     <h4 class="mb-0 mt-0">{{ near_by_user.profile}}</h4> <span>{{near_by_user.location}}</span>
                     <div class="p-2 mt-2 bg-primary d-flex justify-content-between rounded text-white stats">

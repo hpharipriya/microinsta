@@ -8,6 +8,7 @@ from .models import Location, Userprofile, Follow, Post, Likes,Comment
 from django.db import connection
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
+from itertools import chain
 
 # Create your views here.
 
@@ -59,40 +60,20 @@ def index(request):
 
             near_by_users = get_nearby_users(request,"kannur",connections_list)
             
-            posts = get_posts(request)
-        context = {'form':form,"near_by_users":near_by_users,"posts":posts,"connections":connections_list,}
+        posts = get_posts(request)
+        notifications = get_notifications(request)
+       
+        context = {'form':form,"near_by_users":near_by_users,"posts":posts,"connections":connections_list,"notifications" : notifications,}
         return render(request,'insta/feed.html',context)
     else:
         return redirect('accounts/login')
 def get_posts(request):
-    #sql="select * from post where user_id_id in (select user_id from follow where floower_id = request.user.id"
+    sql="""select * from insta_post 
+           where user_id = """+str(request.user.id)+""" or user_id in
+           (select user_id from insta_follow where follower_id = """+str(request.user.id)+""")"""
     #posts = Post.objects.select_related('user_id')
     with connection.cursor() as cursor:
-        # sql = """select * 
-        #         from insta_post left join insta_follow 
-        #         on insta_post.user_id_id = insta_follow.user_id_id 
-        #         where 
-        #         (insta_post.user_id_id = """+str(request.user.id) +""") 
-        #         and 
-        #         (insta_follow.is_accepted = '1')
-        #         or  
-        #         (insta_follow.follower_id_id =""" + str(request.user.id) +""") 
-        #         order by insta_post.created_at desc""" 
 
-        # sql = """SELECT instaP.* 
-        #         FROM `insta_post` as instaP 
-        #         LEFT JOIN `insta_follow` as instaF 
-        #         on (instaP.user_id_id = instaF.user_id_id) 
-        #         WHERE 
-        #         (instaF.is_accepted = 1 AND instaF.follower_id_id = 2) 
-        #         OR 
-        #         instaP.user_id_id = """+str(request.user.id)+""" ORDER BY instaP.created_at DESC"""
-        sql = """SELECT instaP.*, COUNT(instaL.id) as likes 
-FROM `insta_post` as instaP 
-LEFT JOIN `insta_follow` as instaF on (instaP.user_id = instaF.user_id AND instaF.is_accepted = 1)
-LEFT JOIN `insta_likes` instaL ON (instaP.id = instaL.post_id AND instaP.user_id = """+str(request.user.id)+""" )
-where instaF.follower_id = """+str(request.user.id)+""" OR instaP.user_id = """+str(request.user.id)+"""
-GROUP BY(instaL.post_id) ORDER BY instaP.created_at DESC"""
 
         print(sql)
         cursor.execute(sql)
@@ -116,8 +97,8 @@ GROUP BY(instaL.post_id) ORDER BY instaP.created_at DESC"""
             liked_val = True
         
         print(liked_val)
-        
-        posts[i] = {'id': post_id_val,'image': postval[1],'caption': postval[2],'liked':liked_val}
+        post_user = User.objects.get(pk=postval[7])
+        posts[i] = {'id': post_id_val,'image': postval[1],'caption': postval[2],'liked':liked_val,'post_user' : post_user,}
         i += 1
     return posts
     
@@ -220,8 +201,41 @@ def likeme(request):
     return HttpResponse({"data":"success"})
 
 def comment(request):
+    print("in comment.....")
     user = request.user
     postVal = request.POST['post_id']
     comment_val = request.POST['comment_val']
     commented = Comment.objects.get_or_create(user=user,post_id = postVal,comment_body=comment_val)
     return HttpResponse({"data":"success"})
+
+
+def get_notifications(request):
+#     sql = """SELECT l.user_id as liked_user, c.user_id as commented_user 
+# from 
+# insta_likes l, insta_comment c, insta_post p 
+# WHERE
+# (l.post_id = p.id 
+# OR 
+# c.post_id = p.id)
+# AND
+# p.user_id = 3
+# """
+
+    likes = Likes.objects.filter(post__user = request.user)
+    comments = Comment.objects.filter(post__user = request.user)
+    follows = Follow.objects.filter(user = request.user)
+    result_list = sorted(
+    chain(likes, comments, follows),
+    key=lambda instance: instance.created_time)
+
+
+    notifications = form_notification(result_list)
+    return notifications
+
+def form_notification(results):
+    i = 0 
+    notification = {}
+    for result in results :
+        notification[i] = {'type' :result.__str__(),"result" : result}
+        i+= 1
+    return notification
