@@ -84,10 +84,13 @@ WSGI_APPLICATION = 'microinsta.wsgi.application'
 # }
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'insta_latest1',
-        'USER' : 'admin',
-        'PASSWORD': 'admin@123',
+     #   'ENGINE': 'django.db.backends.mysql',
+        'ENGINE' : 'django.db.backends.postgresql',
+        'NAME': 'insta',
+      #  'USER' : 'admin',
+        'USER' : 'postgres',
+        # 'PASSWORD': 'admin@123',
+        'PASSWORD' : 'root',
         'HOST':'localhost'
     }
 }
