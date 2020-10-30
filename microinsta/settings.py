@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'w)%!#*^)z^7t75c!#-g&ys!%3d5t5%ur_2(1err_@qt7nw^7(m'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['localhost','127.0.0.1','micronsta.herokuapp.com']
 
