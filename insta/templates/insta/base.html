@@ -23,7 +23,7 @@
                             <a href="/"><img src="/static/images/instagram.jpg" /></a>
                         </div>
                     </div>
-                    {% if request.user.is_authenticated %} <div style="text-align:right"> Hello, {{request.user.username}}{{ request.user.id}}<a href='accounts/logout' >Logout</a> </div>{% endif %}
+                    {% if request.user.is_authenticated %} <div style="text-align:right"> Hello, {{request.user.username}}, <input type="hidden" value={{ request.user.id}}><a href='accounts/logout' >Logout</a> </div>{% endif %}
                     {% block content %}
                     {% endblock %}
                     <div class="side_bar">

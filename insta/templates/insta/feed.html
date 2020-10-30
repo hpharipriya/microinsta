@@ -96,13 +96,22 @@ function likeme(post_id,unlike,token){
                 </div>
                 <div class="modal-body">
                     {% for index,obj in notifications.items reversed  %}
+                    
                         {%if obj.type == 'Follow' %}
-                            <span>{{obj.result.follower.username}} started following you </span> </br>
+                            {%if obj.result.follower != request.user %}
+                                <span>{{obj.result.follower.username}} started following you </span> </br>
+                            {% endif %}
                         {% elif obj.type == 'Likes' %} 
-                        <span>{{obj.result.user.username}} likes your post </span> </br>
-                        {% elif obj.type == 'Comment' %} 
-                        <span> {{obj.result.user.username}} commented on your post </span> </br>
+                        {%if obj.result.user != request.user %}
+                            <span>{{obj.result.user.username}} likes your post </span> </br>
                         {% endif %}
+                        {% elif obj.type == 'Comment' %} 
+                            {%if obj.result.user != request.user %}
+                            <span> {{obj.result.user.username}} commented on your post </span> </br>
+                            {% endif %}
+
+                        {% endif %}
+                   
                     {% endfor  %}
                 </div>
             </div>
