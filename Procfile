@@ -1,1 +1,1 @@
-web: gunicorn microinsta:wsgi
+web: gunicorn microinsta.wsgi
