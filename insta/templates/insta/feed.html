@@ -4,11 +4,7 @@
 <style>
 
 </style>
-<script>
-
-    
-        
-          
+<script> 
     function follow(follow_id){
         $.ajax({
             type: 'POST',
@@ -22,71 +18,63 @@
                 setTimeout(function() {
                     $('.follow-alert').addClass('fade');
                     location.reload();  
-                },1200);
-                
+                },1200);  
             },
             error: function (response) {
                 // alert the error if any error occured
-                alert(response["responseJSON"]["error"]);
+                alert(response);
             },
     });
 }
-function likeme(post_id,unlike){
+function likeme(post_id,unlike,token){
     $.ajax({
         type: 'POST',
         url: "{% url 'likeme' %}",
-        data: {'post_id': post_id ,
-                'unlike' : unlike,
-        'csrfmiddlewaretoken': '{{ csrf_token }}',
-    },
+        dataType: "json",
+        data: {"post_id": post_id ,
+                "unlike" : unlike,
+        "csrfmiddlewaretoken": token,
+    },   
         success: function (response) {
-            $("#heart").addClass("liked");
+            if(response.unlike){
+                $("#heart"+response.id).html('<i class="fa fa-heart-o" aria-hidden="true"></i>');
+            }
+            else{
+                $("#heart"+response.id).html('<i class="fa fa-heart" aria-hidden="true"></i>');
+            }
         },
         error: function (response) {
             // alert the error if any error occured
-            alert(response["responseJSON"]["error"]);
         },
 });
 }
     
     $(document).ready(function(){
-
-        $("#comment_form").on("submit", function(event){
+        $(".comment_form").on("submit", function(event){
             event.preventDefault();
-     
             var formValues= $(this).serialize();
-
+            var elm = $(this).attr('id');
             $.ajax({
                 type: 'POST',
                 url: '/comment/',
-                data:   $("#comment_form").serialize(),
+                data:   $("#"+elm).serialize(),
                 success: function (response) {
-    
-                    alert("sucess");
-                    
+
+                    //$('#'+elm).append(response.comment);
+                    $('.all_comments-'+elm).append(response.comment);
                 },
                 error: function (response) {
                     // alert the error if any error occured
                     alert(response["responseJSON"]["error"]);
                 },
         });
-     
            /* $.post("process_form.php", formValues, function(data){
                 // Display the returned data in browser
                 $("#result").html(data);
             });
         });*/
     });
-
-        $("#heart").click(function(){
-          if($("#heart").hasClass("liked")){
-            $("#heart").html('<i class="fa fa-heart-o" aria-hidden="true"></i>');
-            $("#heart").removeClass("liked");
-          }else{
-            $("#heart").html('<i class="fa fa-heart" aria-hidden="true"></i>');
-            $("#heart").addClass("liked");
-          }
-        });
+    $('.com-text').val('');
       });
 
 </script>
@@ -94,7 +82,9 @@ function likeme(post_id,unlike){
 {% endblock %}
 
 {% block content %}
-<div class="top_right"><span id='notify' onclick="showNotif()"> Notification </span> <a href='#' onclick="showAddForm()">+</a> 
+<div class="top_right">
+    <span class='fa fa-bell' id='notify' onclick="showNotif()">  </span>
+    <span> <a href='#' onclick="showAddForm()" class="fa fa-plus"></a> </span>
     <div class="notif modal" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -112,8 +102,6 @@ function likeme(post_id,unlike){
                         <span>{{obj.result.user.username}} likes your post </span> </br>
                         {% elif obj.type == 'Comment' %} 
                         <span> {{obj.result.user.username}} commented on your post </span> </br>
-                        
-                        
                         {% endif %}
                     {% endfor  %}
                 </div>
@@ -139,65 +127,51 @@ function likeme(post_id,unlike){
         {{context}}
          {{form}} 
         <input type="submit" value=Submit />
-
     </form>
     </div>
     </div>
     </div>
-    
 </div>
 <div class="col-md-2"></div>
 <div class="col-md-6">
 <div class="main-content">
-    
     {% if posts %}
     {% for id, postval in posts.items %}
-    <div class="card" style="width: 58rem;">
-
-        {{postval.post_user.username}} uploaded
+    <div class="card post-item" style="width: 58rem;">
+        {{postval.post_user.username}} 
         <img src='/media/{{postval.image}}'  width="100%" />
         <div class="card-body">
             <p class="card-text">{{postval.caption}} </p>
+            <div class='all_comments all_comments-comment_form{{id}}'> {{postval.post_comment | default_if_none:''}}</div>
             {% if postval.liked %}
-                <span id = "heart" class="liked">
-                    <i class="fa fa-heart" aria-hidden="true" onclick="likeme({{postval.id}},'unlike')" ></i>
+                <span id = "heart{{postval.id}}" class="liked">
+                    <i class="fa fa-heart" aria-hidden="true" onclick='likeme({{postval.id}},"unlike","{{csrf_token}}")' ></i>
                 </span>
             {% else %}
-                <span id = heart>
-                    <i class="fa fa-heart-o" aria-hidden="true" onclick="likeme({{postval.id}},'')" ></i>
+                <span id = heart{{postval.id}}>
+                    <i class="fa fa-heart-o" aria-hidden="true" onclick='likeme({{postval.id}},"","{{csrf_token}}")' ></i>
                 </span>
-                
             {% endif %}
-            <span  onclick="openCBox()">comment</span>
-            <div class="cbox">
-                <form method="POST" id="comment_form">
+            <span  onclick="openCBox({{id}})" style="color:#d3d3d3">Comment</span>
+            <div class="cbox cbox{{id}}">
+                <form method="POST" class="comment_form" id="comment_form{{id}}">
                     {% csrf_token %}
                     <input type="hidden" value="{{postval.id}}" name="post_id" />
-                    <textarea rows="3" cols="70" name="comment_val"></textarea>
-                    <button   value="Submit" style="width: 15%;" name="comment_submit" >ddd</button>
+                    <textarea class = 'com-text'rows="3" cols="70" name="comment_val"></textarea>
+                    <button value="Submit" style="width: 15%;" name="comment_submit" >Post</button>
                 </form>
             </div>  
-               
-
 <!-- Used CDN for Font Awesome and Jquery. -->
-
-
-
         </div>
     </div>
-
     {% endfor %}    
     {% endif %}    
-
     {%if uploadedValues %}
-    <img src='/media/posts/{{uploadedValues.imagepath}}'  width="100%" />
+    <img src='/media/{{uploadedValues.imagepath}}'  width="100%" />
     {{uploadedValues.caption}}
     {% endif %}
-
 </div>
 </div>
-
-
 <div class="col-md-4">
     {%if near_by_users %}
 <h2 style="text-align:center">People You may Know</h2>
@@ -228,9 +202,4 @@ function likeme(post_id,unlike){
     
     {% endfor %}
     </div>
-
-
-
-
-
 {% endblock %}

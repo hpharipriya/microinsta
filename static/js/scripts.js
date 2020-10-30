@@ -5,8 +5,8 @@
     function closeAddForm(){
         $('.add_form').hide();
     }
-    function openCBox(){
-        $('.cbox').show();
+    function openCBox(id){
+        $('.cbox'+id).show();
     }
     function showNotif(){
         $('.notif').show();

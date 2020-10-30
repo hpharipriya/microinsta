@@ -6,6 +6,7 @@
   body {
     background-color: #eee;
     max-width: 1325px;
+    margin: 25px;
   }
   
   #wrapper {
@@ -241,6 +242,16 @@
    }
    .cbox{
      display: none;
+   }
+   a:hover{text-decoration: none;}
+   .post-item{
+     margin-top: 20px;
+     border:1px solid #d3d3d3;
+     padding: 10px;
+   }
+   .all_comments{
+     margin: 5px;
+     padding: 5px;
    }
 
    
